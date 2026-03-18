@@ -1,9 +1,5 @@
 name: Deployment workflow
 on: 
-  pull_request:
-    types: [closed]
-    branches:
-    - main
   push:
     branches:
     - main
@@ -22,14 +18,40 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build project
-        run: npm run build
-        
+      - name: lint code
+        run: npm run lint
+
       - name: Run tests
-        run: npm test 
+        run: npm run test 
+
+  build:
+    needs: lint-and-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '14'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build the application
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: build-artifact  
+          path: |
+            Dist
+            package.json
 
   deploy:
-    needs: lint-and-test
+    needs: build
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
